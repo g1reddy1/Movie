@@ -16,4 +16,6 @@ public interface MovieInfoService {
     MovieDTO getMovie(String movieName);
 
     void saveMovie(MovieDTO movieDTO);
+
+    void saveMovies();
 }

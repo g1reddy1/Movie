@@ -35,4 +35,9 @@ public class MovieInfoController {
     public void addMovie(@RequestBody MovieDTO movieDTO) {
         movieInfoService.saveMovie(movieDTO);
     }
+
+    @PostMapping(value="/addMovies")
+    public void addMovies(@RequestBody MovieDTO movieDTO) {
+        movieInfoService.saveMovies();
+    }
 }
