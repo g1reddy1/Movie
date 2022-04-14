@@ -4,6 +4,7 @@ import com.entertainment.movie.dto.MovieDTO;
 import com.entertainment.movie.dto.UserRatingDTO;
 import com.entertainment.movie.exception.MovieAlreadyExistsException;
 import com.entertainment.movie.model.Movie;
+import com.entertainment.movie.model.UserRating;
 import com.entertainment.movie.repository.MovieRepository;
 import com.entertainment.movie.repository.UserRatingRepository;
 import com.entertainment.movie.exception.ResourceNotFoundException;
@@ -43,10 +44,19 @@ public class MovieInfoServiceImpl implements MovieInfoService {
 
     @Override
     public void updateMovieRating(UserRatingDTO userRatingDTO) {
-        Movie movie = movieRepository.findByMovieName(userRatingDTO.getMovieName()).orElseThrow(() -> new ResourceNotFoundException("Movie not avialable with movie name: "+ userRatingDTO.getMovieName()));
+        Movie movie = movieRepository.findByMovieName(userRatingDTO.getMovieName()).orElseThrow(() -> new ResourceNotFoundException("Movie not avialable with movie name: " + userRatingDTO.getMovieName()));
         Double rating = movie.getAverageRating();
         int numberOfRatings = movie.getUserRatings().size();
-        rating = (rating * numberOfRatings + userRatingDTO.getUserRating()) / (numberOfRatings + 1);
+        int latestNumberOfRatings = numberOfRatings;
+        double existingUserRating = 0;
+        Optional<UserRating> existingUserRatingEntity = userRatingRepository.findByUsernameAndMovieName(userRatingDTO.getUserName(), userRatingDTO.getMovieName());
+        if (existingUserRatingEntity.isPresent()) {
+            existingUserRating = existingUserRatingEntity.get().getRating();
+        }
+        else {
+            latestNumberOfRatings++;
+        }
+        rating = (rating * (numberOfRatings) + userRatingDTO.getUserRating()-existingUserRating) / (latestNumberOfRatings);
         movie.setAverageRating(rating);
         movieRepository.save(movie);
     }
@@ -60,12 +70,12 @@ public class MovieInfoServiceImpl implements MovieInfoService {
     @Override
     public void saveMovie(MovieDTO movieDTO) {
         Optional<Movie> movieExisting = movieRepository.findByMovieName(movieDTO.getMovieName());
-        if(movieExisting.isPresent()) {
+        if (movieExisting.isPresent()) {
             throw new MovieAlreadyExistsException("Movie already exists");
         }
         Movie movie = new Movie();
         movie.setMovieName(movieDTO.getMovieName());
-        if(movieDTO.getAverageRating() == null) {
+        if (movieDTO.getAverageRating() == null) {
             movieDTO.setAverageRating(0.0);
         }
         movie.setAverageRating(movieDTO.getAverageRating());
@@ -75,7 +85,7 @@ public class MovieInfoServiceImpl implements MovieInfoService {
     @Override
     public void saveMovies() {
         for (int id = 1; id < 100; id++) {
-            String urls = "https://api.themoviedb.org/3/movie/"+id+"?api_key=f1bb06f3ec825f1afd57391e3b107b8b";
+            String urls = "https://api.themoviedb.org/3/movie/" + id + "?api_key=f1bb06f3ec825f1afd57391e3b107b8b";
             try {
                 URL url = new URL(urls);
                 URLConnection urlConnection = url.openConnection();
